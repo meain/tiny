@@ -46,6 +46,7 @@ pub struct MessagingUI {
     last_activity_line: Option<ActivityLine>,
     last_activity_ts: Option<Timestamp>,
 
+    // padding on the left for nick
     left_spacing: usize,
 }
 
@@ -377,24 +378,8 @@ impl MessagingUI {
         self.reset_activity_line();
         self.add_timestamp(ts);
 
-        // if ctcp_action {
-        //     self.msg_area
-        //         .set_style(SegStyle::SchemeStyle(SchemeStyle::UserMsg));
-        //     self.msg_area.add_text("**");
-        // }
-        //
-        // {
         let nick_color = self.get_nick_color(sender);
         let style = SegStyle::Index(nick_color);
-        //     self.msg_area.set_style(style);
-        //
-        //     self.msg_area
-        //         .add_text(&format!("{: >1$}", sender, self.left_spacing));
-        //     self.msg_area
-        //         .set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
-        //     self.msg_area.add_text(" | ");
-        // }
-
         let mut message_style = SegStyle::SchemeStyle(SchemeStyle::UserMsg);
         let mut sender_text = sender.to_string();
         if ctcp_action {
@@ -404,40 +389,6 @@ impl MessagingUI {
             message_style = SegStyle::SchemeStyle(SchemeStyle::Highlight);
         }
         self.add_formatted_text(msg, &sender_text, message_style, style);
-
-        // self.msg_area
-        //     .set_style(SegStyle::SchemeStyle(SchemeStyle::UserMsg));
-
-        // if !ctcp_action {
-        //     self.msg_area.add_char(':');
-        // }
-        // self.msg_area.add_char(' ');
-
-        // if highlight {
-        //     self.msg_area
-        //         .set_style(SegStyle::SchemeStyle(SchemeStyle::Highlight));
-        // }
-        //
-        // let subs = msg
-        //     .as_bytes()
-        //     .chunks((self.width - (30 as i32)) as usize) // TODO: change this when width changes
-        //     .map(str::from_utf8)
-        //     .collect::<Result<Vec<&str>, _>>()
-        //     .unwrap();
-        //
-        // for (i, sub) in subs.iter().enumerate() {
-        //     if i != 0 {
-        //         self.msg_area
-        //             .add_text(&format!("{: <1$}", "", self.left_spacing));
-        //         self.msg_area
-        //             .set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
-        //         self.msg_area.add_text(" | ");
-        //         self.msg_area
-        //             .set_style(SegStyle::SchemeStyle(SchemeStyle::UserMsg));
-        //     }
-        //     self.msg_area.add_text(sub);
-        //     self.msg_area.flush_line();
-        // }
     }
 
     pub fn add_msg(&mut self, msg: &str, ts: Timestamp) {
