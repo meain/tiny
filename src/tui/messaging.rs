@@ -230,7 +230,7 @@ impl MessagingUI {
             }
         };
 
-        self.draw_current_nick = (nick_width as f32) <= (width as f32) *(30f32 / 100f32);
+        self.draw_current_nick = (nick_width as f32) <= (width as f32) * (30f32 / 100f32);
 
         let widget_width = if self.draw_current_nick {
             width - nick_width
@@ -286,85 +286,57 @@ impl MessagingUI {
         self.last_activity_ts = Some(ts);
     }
 
-    pub fn show_topic(&mut self, topic: &str, ts: Timestamp) {
-        self.add_timestamp(ts);
+    fn add_formatted_text(&mut self, text: &str, sender: &str, style: SchemeStyle, senderStyle: SchemeStyle) {
+        self.msg_area.set_style(SegStyle::SchemeStyle(style));
+        self.msg_area
+            .add_text(&format!("{: >1$}", sender, self.left_spacing));
 
-        // self.msg_area
-        //     .set_style(SegStyle::SchemeStyle(SchemeStyle::Topic));
+        self.msg_area
+            .set_style(SegStyle::SchemeStyle(senderStyle));
+        self.msg_area.add_text(" | ");
+        self.msg_area.set_style(SegStyle::SchemeStyle(style));
 
-        let subs = topic
+        let subs = text
             .as_bytes()
-            .chunks((self.width - (30 as i32)) as usize) // TODO: change this when width changes
+            .chunks((self.width - ((self.left_spacing + 5) as i32)) as usize) // TODO: change this when width changes
             .map(str::from_utf8)
             .collect::<Result<Vec<&str>, _>>()
             .unwrap();
 
         for (i, sub) in subs.iter().enumerate() {
-            self.msg_area
-                .set_style(SegStyle::SchemeStyle(SchemeStyle::Topic));
-            self.msg_area
-                .add_text(&format!("{: >1$}", "*", self.left_spacing));
-
-            self.msg_area
-                .set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
-            self.msg_area.add_text(" | ");
-            self.msg_area
-                .set_style(SegStyle::SchemeStyle(SchemeStyle::Topic));
-
+            if i != 0 {
+                self.msg_area
+                    .add_text(&format!("{: <1$}", "", self.left_spacing));
+                self.msg_area
+                    .set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
+                self.msg_area.add_text(" | ");
+                self.msg_area.set_style(SegStyle::SchemeStyle(style));
+            }
             self.msg_area.add_text(sub);
             self.msg_area.flush_line();
         }
-        // self.msg_area.add_text("                     ");
-        // self.msg_area.add_text(topic);
-        //
-        // self.msg_area.flush_line();
+    }
+
+    pub fn show_topic(&mut self, topic: &str, ts: Timestamp) {
+        self.add_timestamp(ts);
+        self.add_formatted_text(topic, "*", SchemeStyle::Topic, SchemeStyle::Faded);
     }
 
     pub fn add_client_err_msg(&mut self, msg: &str) {
         self.reset_activity_line();
-
-        self.msg_area
-            .set_style(SegStyle::SchemeStyle(SchemeStyle::ErrMsg));
-        self.msg_area
-            .add_text(&format!("{: >1$}", "*", self.left_spacing));
-        self.msg_area
-            .set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
-        self.msg_area.add_text(" | ");
-        self.msg_area
-            .set_style(SegStyle::SchemeStyle(SchemeStyle::ErrMsg));
-        self.msg_area.add_text(msg);
-        self.msg_area.flush_line();
+        self.add_formatted_text(msg, "*", SchemeStyle::ErrMsg, SchemeStyle::Faded);
+        self.reset_activity_line();
     }
 
     pub fn add_client_notify_msg(&mut self, msg: &str) {
         self.reset_activity_line();
-
-        self.msg_area
-            .set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
-        self.msg_area
-            .add_text(&format!("{: >1$}", "*", self.left_spacing));
-
-        self.msg_area.add_text(" | ");
-
-        self.msg_area.add_text(msg);
-        self.msg_area.flush_line();
+        self.add_formatted_text(msg, "*", SchemeStyle::Faded, SchemeStyle::Faded);
         self.reset_activity_line();
     }
 
     pub fn add_client_msg(&mut self, msg: &str) {
         self.reset_activity_line();
-
-        self.msg_area
-            .set_style(SegStyle::SchemeStyle(SchemeStyle::UserMsg));
-        self.msg_area
-            .add_text(&format!("{: >1$}", "*", self.left_spacing));
-        self.msg_area
-            .set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
-        self.msg_area.add_text(" | ");
-        self.msg_area
-            .set_style(SegStyle::SchemeStyle(SchemeStyle::UserMsg));
-        self.msg_area.add_text(msg);
-        self.msg_area.flush_line();
+        self.add_formatted_text(msg, "*", SchemeStyle::UserMsg, SchemeStyle::Faded);
         self.reset_activity_line();
     }
 
@@ -434,38 +406,14 @@ impl MessagingUI {
 
     pub fn add_msg(&mut self, msg: &str, ts: Timestamp) {
         self.reset_activity_line();
-
         self.add_timestamp(ts);
-        self.msg_area
-            .set_style(SegStyle::SchemeStyle(SchemeStyle::UserMsg));
-
-        self.msg_area
-            .add_text(&format!("{: >1$}", "*", self.left_spacing));
-        self.msg_area
-            .set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
-        self.msg_area.add_text(" | ");
-        self.msg_area
-            .set_style(SegStyle::SchemeStyle(SchemeStyle::UserMsg));
-        self.msg_area.add_text(msg);
-        self.msg_area.flush_line();
+        self.add_formatted_text(msg, "*", SchemeStyle::UserMsg, SchemeStyle::Faded);
     }
 
     pub fn add_err_msg(&mut self, msg: &str, ts: Timestamp) {
         self.reset_activity_line();
-
         self.add_timestamp(ts);
-        self.msg_area
-            .set_style(SegStyle::SchemeStyle(SchemeStyle::ErrMsg));
-
-        self.msg_area
-            .add_text(&format!("{: >1$}", "*", self.left_spacing));
-        self.msg_area
-            .set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
-        self.msg_area.add_text(" | ");
-        self.msg_area
-            .set_style(SegStyle::SchemeStyle(SchemeStyle::ErrMsg));
-        self.msg_area.add_text(msg);
-        self.msg_area.flush_line();
+        self.add_formatted_text(msg, "*", SchemeStyle::ErrMsg, SchemeStyle::Faded);
     }
 
     pub fn clear(&mut self) {
