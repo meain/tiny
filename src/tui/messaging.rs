@@ -287,6 +287,7 @@ impl MessagingUI {
 
         self.msg_area
             .set_style(SegStyle::SchemeStyle(SchemeStyle::Topic));
+        self.msg_area.add_text("                     ");
         self.msg_area.add_text(topic);
 
         self.msg_area.flush_line();
@@ -297,6 +298,7 @@ impl MessagingUI {
 
         self.msg_area
             .set_style(SegStyle::SchemeStyle(SchemeStyle::ErrMsg));
+        self.msg_area.add_text("                     ");
         self.msg_area.add_text(msg);
         self.msg_area.flush_line();
     }
@@ -306,6 +308,7 @@ impl MessagingUI {
 
         self.msg_area
             .set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
+        self.msg_area.add_text("                     ");
         self.msg_area.add_text(msg);
         self.msg_area.flush_line();
         self.reset_activity_line();
@@ -316,6 +319,7 @@ impl MessagingUI {
 
         self.msg_area
             .set_style(SegStyle::SchemeStyle(SchemeStyle::UserMsg));
+        self.msg_area.add_text("                     ");
         self.msg_area.add_text(msg);
         self.msg_area.flush_line();
         self.reset_activity_line();
@@ -330,7 +334,7 @@ impl MessagingUI {
         ctcp_action: bool,
     ) {
         self.reset_activity_line();
-        self.add_timestamp(ts);
+        // self.add_timestamp(ts);
 
         if ctcp_action {
             self.msg_area
@@ -342,15 +346,15 @@ impl MessagingUI {
             let nick_color = self.get_nick_color(sender);
             let style = SegStyle::Index(nick_color);
             self.msg_area.set_style(style);
-            self.msg_area.add_text(sender);
+            self.msg_area.add_text(&format!("{: >20}", sender));
         }
 
         self.msg_area
             .set_style(SegStyle::SchemeStyle(SchemeStyle::UserMsg));
 
-        if !ctcp_action {
-            self.msg_area.add_char(':');
-        }
+        // if !ctcp_action {
+        //     self.msg_area.add_char(':');
+        // }
         self.msg_area.add_char(' ');
 
         if highlight {
@@ -365,9 +369,11 @@ impl MessagingUI {
     pub fn add_msg(&mut self, msg: &str, ts: Timestamp) {
         self.reset_activity_line();
 
-        self.add_timestamp(ts);
+        // self.add_timestamp(ts);
         self.msg_area
             .set_style(SegStyle::SchemeStyle(SchemeStyle::UserMsg));
+
+        self.msg_area.add_text("                     ");
         self.msg_area.add_text(msg);
         self.msg_area.flush_line();
     }
@@ -375,9 +381,10 @@ impl MessagingUI {
     pub fn add_err_msg(&mut self, msg: &str, ts: Timestamp) {
         self.reset_activity_line();
 
-        self.add_timestamp(ts);
+        // self.add_timestamp(ts);
         self.msg_area
             .set_style(SegStyle::SchemeStyle(SchemeStyle::ErrMsg));
+        self.msg_area.add_text("                    ");
         self.msg_area.add_text(msg);
         self.msg_area.flush_line();
     }
@@ -412,6 +419,7 @@ impl MessagingUI {
                     line.set_style(SegStyle::SchemeStyle(SchemeStyle::Join));
                     line.add_char('+');
                     line.set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
+                    line.add_text("                     ");
                     line.add_text(nick);
                     line.add_char(' ');
                 });
@@ -431,6 +439,7 @@ impl MessagingUI {
                     line.set_style(SegStyle::SchemeStyle(SchemeStyle::Part));
                     line.add_char('-');
                     line.set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
+                    line.add_text("                     ");
                     line.add_text(nick);
                     line.add_char(' ');
                 });
@@ -460,6 +469,7 @@ impl MessagingUI {
         let line_idx = self.get_activity_line_idx(ts);
         self.msg_area.modify_line(line_idx, |line| {
             line.set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
+            line.add_text("                     ");
             line.add_text(old_nick);
             line.set_style(SegStyle::SchemeStyle(SchemeStyle::Nick));
             line.add_char('>');

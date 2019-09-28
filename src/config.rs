@@ -175,7 +175,7 @@ impl Default for Colors {
                 fg: 0,
                 bg: TB_DEFAULT,
             },
-            err_msg: Style { fg: TB_BOLD, bg: 1 },
+            err_msg: Style { fg: 1, bg: TB_DEFAULT },
             topic: Style {
                 fg: 14 | TB_BOLD,
                 bg: TB_DEFAULT,
