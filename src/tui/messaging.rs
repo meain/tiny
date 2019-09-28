@@ -286,15 +286,21 @@ impl MessagingUI {
         self.last_activity_ts = Some(ts);
     }
 
-    fn add_formatted_text(&mut self, text: &str, sender: &str, style: SchemeStyle, senderStyle: SchemeStyle) {
-        self.msg_area.set_style(SegStyle::SchemeStyle(style));
+    fn add_formatted_text(
+        &mut self,
+        text: &str,
+        sender: &str,
+        style: SegStyle,
+        sender_style: SegStyle,
+    ) {
+        self.msg_area.set_style(sender_style);
         self.msg_area
             .add_text(&format!("{: >1$}", sender, self.left_spacing));
 
         self.msg_area
-            .set_style(SegStyle::SchemeStyle(senderStyle));
+            .set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
         self.msg_area.add_text(" | ");
-        self.msg_area.set_style(SegStyle::SchemeStyle(style));
+        self.msg_area.set_style(style);
 
         let subs = text
             .as_bytes()
@@ -310,7 +316,7 @@ impl MessagingUI {
                 self.msg_area
                     .set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
                 self.msg_area.add_text(" | ");
-                self.msg_area.set_style(SegStyle::SchemeStyle(style));
+                self.msg_area.set_style(style);
             }
             self.msg_area.add_text(sub);
             self.msg_area.flush_line();
@@ -319,24 +325,44 @@ impl MessagingUI {
 
     pub fn show_topic(&mut self, topic: &str, ts: Timestamp) {
         self.add_timestamp(ts);
-        self.add_formatted_text(topic, "*", SchemeStyle::Topic, SchemeStyle::Faded);
+        self.add_formatted_text(
+            topic,
+            "*",
+            SegStyle::SchemeStyle(SchemeStyle::Topic),
+            SegStyle::SchemeStyle(SchemeStyle::Faded),
+        );
     }
 
     pub fn add_client_err_msg(&mut self, msg: &str) {
         self.reset_activity_line();
-        self.add_formatted_text(msg, "*", SchemeStyle::ErrMsg, SchemeStyle::Faded);
+        self.add_formatted_text(
+            msg,
+            "*",
+            SegStyle::SchemeStyle(SchemeStyle::ErrMsg),
+            SegStyle::SchemeStyle(SchemeStyle::Faded),
+        );
         self.reset_activity_line();
     }
 
     pub fn add_client_notify_msg(&mut self, msg: &str) {
         self.reset_activity_line();
-        self.add_formatted_text(msg, "*", SchemeStyle::Faded, SchemeStyle::Faded);
+        self.add_formatted_text(
+            msg,
+            "*",
+            SegStyle::SchemeStyle(SchemeStyle::Faded),
+            SegStyle::SchemeStyle(SchemeStyle::Faded),
+        );
         self.reset_activity_line();
     }
 
     pub fn add_client_msg(&mut self, msg: &str) {
         self.reset_activity_line();
-        self.add_formatted_text(msg, "*", SchemeStyle::UserMsg, SchemeStyle::Faded);
+        self.add_formatted_text(
+            msg,
+            "*",
+            SegStyle::SchemeStyle(SchemeStyle::UserMsg),
+            SegStyle::SchemeStyle(SchemeStyle::Faded),
+        );
         self.reset_activity_line();
     }
 
@@ -351,69 +377,89 @@ impl MessagingUI {
         self.reset_activity_line();
         self.add_timestamp(ts);
 
+        // if ctcp_action {
+        //     self.msg_area
+        //         .set_style(SegStyle::SchemeStyle(SchemeStyle::UserMsg));
+        //     self.msg_area.add_text("**");
+        // }
+        //
+        // {
+        let nick_color = self.get_nick_color(sender);
+        let style = SegStyle::Index(nick_color);
+        //     self.msg_area.set_style(style);
+        //
+        //     self.msg_area
+        //         .add_text(&format!("{: >1$}", sender, self.left_spacing));
+        //     self.msg_area
+        //         .set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
+        //     self.msg_area.add_text(" | ");
+        // }
+
+        let mut message_style = SegStyle::SchemeStyle(SchemeStyle::UserMsg);
+        let mut sender_text = sender.to_string();
         if ctcp_action {
-            self.msg_area
-                .set_style(SegStyle::SchemeStyle(SchemeStyle::UserMsg));
-            self.msg_area.add_text("**");
+            sender_text = "**".to_string() + sender;
         }
-
-        {
-            let nick_color = self.get_nick_color(sender);
-            let style = SegStyle::Index(nick_color);
-            self.msg_area.set_style(style);
-
-            self.msg_area
-                .add_text(&format!("{: >1$}", sender, self.left_spacing));
-            self.msg_area
-                .set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
-            self.msg_area.add_text(" | ");
+        if highlight {
+            message_style = SegStyle::SchemeStyle(SchemeStyle::Highlight);
         }
+        self.add_formatted_text(msg, &sender_text, message_style, style);
 
-        self.msg_area
-            .set_style(SegStyle::SchemeStyle(SchemeStyle::UserMsg));
+        // self.msg_area
+        //     .set_style(SegStyle::SchemeStyle(SchemeStyle::UserMsg));
 
         // if !ctcp_action {
         //     self.msg_area.add_char(':');
         // }
         // self.msg_area.add_char(' ');
 
-        if highlight {
-            self.msg_area
-                .set_style(SegStyle::SchemeStyle(SchemeStyle::Highlight));
-        }
-
-        let subs = msg
-            .as_bytes()
-            .chunks((self.width - (30 as i32)) as usize) // TODO: change this when width changes
-            .map(str::from_utf8)
-            .collect::<Result<Vec<&str>, _>>()
-            .unwrap();
-
-        for (i, sub) in subs.iter().enumerate() {
-            if i != 0 {
-                self.msg_area
-                    .add_text(&format!("{: <1$}", "", self.left_spacing));
-                self.msg_area
-                    .set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
-                self.msg_area.add_text(" | ");
-                self.msg_area
-                    .set_style(SegStyle::SchemeStyle(SchemeStyle::UserMsg));
-            }
-            self.msg_area.add_text(sub);
-            self.msg_area.flush_line();
-        }
+        // if highlight {
+        //     self.msg_area
+        //         .set_style(SegStyle::SchemeStyle(SchemeStyle::Highlight));
+        // }
+        //
+        // let subs = msg
+        //     .as_bytes()
+        //     .chunks((self.width - (30 as i32)) as usize) // TODO: change this when width changes
+        //     .map(str::from_utf8)
+        //     .collect::<Result<Vec<&str>, _>>()
+        //     .unwrap();
+        //
+        // for (i, sub) in subs.iter().enumerate() {
+        //     if i != 0 {
+        //         self.msg_area
+        //             .add_text(&format!("{: <1$}", "", self.left_spacing));
+        //         self.msg_area
+        //             .set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
+        //         self.msg_area.add_text(" | ");
+        //         self.msg_area
+        //             .set_style(SegStyle::SchemeStyle(SchemeStyle::UserMsg));
+        //     }
+        //     self.msg_area.add_text(sub);
+        //     self.msg_area.flush_line();
+        // }
     }
 
     pub fn add_msg(&mut self, msg: &str, ts: Timestamp) {
         self.reset_activity_line();
         self.add_timestamp(ts);
-        self.add_formatted_text(msg, "*", SchemeStyle::UserMsg, SchemeStyle::Faded);
+        self.add_formatted_text(
+            msg,
+            "*",
+            SegStyle::SchemeStyle(SchemeStyle::UserMsg),
+            SegStyle::SchemeStyle(SchemeStyle::Faded),
+        );
     }
 
     pub fn add_err_msg(&mut self, msg: &str, ts: Timestamp) {
         self.reset_activity_line();
         self.add_timestamp(ts);
-        self.add_formatted_text(msg, "*", SchemeStyle::ErrMsg, SchemeStyle::Faded);
+        self.add_formatted_text(
+            msg,
+            "*",
+            SegStyle::SchemeStyle(SchemeStyle::ErrMsg),
+            SegStyle::SchemeStyle(SchemeStyle::Faded),
+        );
     }
 
     pub fn clear(&mut self) {
