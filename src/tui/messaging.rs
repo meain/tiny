@@ -230,7 +230,7 @@ impl MessagingUI {
             }
         };
 
-        self.draw_current_nick = (nick_width as f32) <= (width as f32) * (30f32 / 100f32);
+        self.draw_current_nick = (nick_width as f32) <= (width as f32) *(30f32 / 100f32);
 
         let widget_width = if self.draw_current_nick {
             width - nick_width
@@ -303,7 +303,14 @@ impl MessagingUI {
             self.msg_area
                 .set_style(SegStyle::SchemeStyle(SchemeStyle::Topic));
             self.msg_area
-                .add_text(&format!("{: >1$}", "* ", self.left_spacing));
+                .add_text(&format!("{: >1$}", "*", self.left_spacing));
+
+            self.msg_area
+                .set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
+            self.msg_area.add_text(" | ");
+            self.msg_area
+                .set_style(SegStyle::SchemeStyle(SchemeStyle::Topic));
+
             self.msg_area.add_text(sub);
             self.msg_area.flush_line();
         }
@@ -319,7 +326,12 @@ impl MessagingUI {
         self.msg_area
             .set_style(SegStyle::SchemeStyle(SchemeStyle::ErrMsg));
         self.msg_area
-            .add_text(&format!("{: >1$}", "* ", self.left_spacing));
+            .add_text(&format!("{: >1$}", "*", self.left_spacing));
+        self.msg_area
+            .set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
+        self.msg_area.add_text(" | ");
+        self.msg_area
+            .set_style(SegStyle::SchemeStyle(SchemeStyle::ErrMsg));
         self.msg_area.add_text(msg);
         self.msg_area.flush_line();
     }
@@ -330,7 +342,10 @@ impl MessagingUI {
         self.msg_area
             .set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
         self.msg_area
-            .add_text(&format!("{: >1$}", "* ", self.left_spacing));
+            .add_text(&format!("{: >1$}", "*", self.left_spacing));
+
+        self.msg_area.add_text(" | ");
+
         self.msg_area.add_text(msg);
         self.msg_area.flush_line();
         self.reset_activity_line();
@@ -342,7 +357,12 @@ impl MessagingUI {
         self.msg_area
             .set_style(SegStyle::SchemeStyle(SchemeStyle::UserMsg));
         self.msg_area
-            .add_text(&format!("{: >1$}", "* ", self.left_spacing));
+            .add_text(&format!("{: >1$}", "*", self.left_spacing));
+        self.msg_area
+            .set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
+        self.msg_area.add_text(" | ");
+        self.msg_area
+            .set_style(SegStyle::SchemeStyle(SchemeStyle::UserMsg));
         self.msg_area.add_text(msg);
         self.msg_area.flush_line();
         self.reset_activity_line();
@@ -362,7 +382,7 @@ impl MessagingUI {
         if ctcp_action {
             self.msg_area
                 .set_style(SegStyle::SchemeStyle(SchemeStyle::UserMsg));
-            self.msg_area.add_text("** ");
+            self.msg_area.add_text("**");
         }
 
         {
@@ -371,7 +391,10 @@ impl MessagingUI {
             self.msg_area.set_style(style);
 
             self.msg_area
-                .add_text(&format!("{: >1$}", sender, self.left_spacing - 1));
+                .add_text(&format!("{: >1$}", sender, self.left_spacing));
+            self.msg_area
+                .set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
+            self.msg_area.add_text(" | ");
         }
 
         self.msg_area
@@ -380,7 +403,7 @@ impl MessagingUI {
         // if !ctcp_action {
         //     self.msg_area.add_char(':');
         // }
-        self.msg_area.add_char(' ');
+        // self.msg_area.add_char(' ');
 
         if highlight {
             self.msg_area
@@ -398,6 +421,11 @@ impl MessagingUI {
             if i != 0 {
                 self.msg_area
                     .add_text(&format!("{: <1$}", "", self.left_spacing));
+                self.msg_area
+                    .set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
+                self.msg_area.add_text(" | ");
+                self.msg_area
+                    .set_style(SegStyle::SchemeStyle(SchemeStyle::UserMsg));
             }
             self.msg_area.add_text(sub);
             self.msg_area.flush_line();
@@ -412,7 +440,12 @@ impl MessagingUI {
             .set_style(SegStyle::SchemeStyle(SchemeStyle::UserMsg));
 
         self.msg_area
-            .add_text(&format!("{: >1$}", "* ", self.left_spacing));
+            .add_text(&format!("{: >1$}", "*", self.left_spacing));
+        self.msg_area
+            .set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
+        self.msg_area.add_text(" | ");
+        self.msg_area
+            .set_style(SegStyle::SchemeStyle(SchemeStyle::UserMsg));
         self.msg_area.add_text(msg);
         self.msg_area.flush_line();
     }
@@ -425,7 +458,12 @@ impl MessagingUI {
             .set_style(SegStyle::SchemeStyle(SchemeStyle::ErrMsg));
 
         self.msg_area
-            .add_text(&format!("{: >1$}", "* ", self.left_spacing));
+            .add_text(&format!("{: >1$}", "*", self.left_spacing));
+        self.msg_area
+            .set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
+        self.msg_area.add_text(" | ");
+        self.msg_area
+            .set_style(SegStyle::SchemeStyle(SchemeStyle::ErrMsg));
         self.msg_area.add_text(msg);
         self.msg_area.flush_line();
     }
@@ -509,7 +547,9 @@ impl MessagingUI {
         let left_spacing = self.left_spacing;
         self.msg_area.modify_line(line_idx, |line| {
             line.set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
-            line.add_text(&format!("{: >1$}", "* ", left_spacing));
+            line.add_text(&format!("{: >1$}", "*", left_spacing));
+            line.set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
+            line.add_text(" | ");
             line.add_text(old_nick);
             line.set_style(SegStyle::SchemeStyle(SchemeStyle::Nick));
             line.add_char('>');
@@ -539,7 +579,9 @@ impl MessagingUI {
         self.msg_area
             .set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
         self.msg_area
-            .add_text(&format!("{: >1$}", "* ", self.left_spacing));
+            .add_text(&format!("{: >1$}", "*", self.left_spacing));
+
+        self.msg_area.add_text(" | ");
         let line_idx = self.msg_area.flush_line();
         self.last_activity_line = Some(ActivityLine { ts, line_idx });
         line_idx
