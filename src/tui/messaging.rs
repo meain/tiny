@@ -3,6 +3,7 @@ use termbox_simple::Termbox;
 
 use std::convert::From;
 
+use std::str;
 use time;
 use time::Tm;
 
@@ -44,6 +45,8 @@ pub struct MessagingUI {
 
     last_activity_line: Option<ActivityLine>,
     last_activity_ts: Option<Timestamp>,
+
+    left_spacing: usize,
 }
 
 /// Like `time::Tm`, but we only care about hour and minute parts.
@@ -95,6 +98,7 @@ impl MessagingUI {
             draw_current_nick: true,
             last_activity_line: None,
             last_activity_ts: None,
+            left_spacing: 20,
         }
     }
 
@@ -272,25 +276,41 @@ impl MessagingUI {
 
 impl MessagingUI {
     fn add_timestamp(&mut self, ts: Timestamp) {
-        if let Some(ts_) = self.last_activity_ts {
-            if ts_ != ts {
-                ts.stamp(&mut self.msg_area);
-            }
-        } else {
-            ts.stamp(&mut self.msg_area);
-        }
+        // if let Some(ts_) = self.last_activity_ts {
+        //     if ts_ != ts {
+        //         ts.stamp(&mut self.msg_area);
+        //     }
+        // } else {
+        //     ts.stamp(&mut self.msg_area);
+        // }
         self.last_activity_ts = Some(ts);
     }
 
     pub fn show_topic(&mut self, topic: &str, ts: Timestamp) {
         self.add_timestamp(ts);
 
-        self.msg_area
-            .set_style(SegStyle::SchemeStyle(SchemeStyle::Topic));
-        self.msg_area.add_text("                     ");
-        self.msg_area.add_text(topic);
+        // self.msg_area
+        //     .set_style(SegStyle::SchemeStyle(SchemeStyle::Topic));
 
-        self.msg_area.flush_line();
+        let subs = topic
+            .as_bytes()
+            .chunks((self.width - (30 as i32)) as usize) // TODO: change this when width changes
+            .map(str::from_utf8)
+            .collect::<Result<Vec<&str>, _>>()
+            .unwrap();
+
+        for (i, sub) in subs.iter().enumerate() {
+            self.msg_area
+                .set_style(SegStyle::SchemeStyle(SchemeStyle::Topic));
+            self.msg_area
+                .add_text(&format!("{: >1$}", "* ", self.left_spacing));
+            self.msg_area.add_text(sub);
+            self.msg_area.flush_line();
+        }
+        // self.msg_area.add_text("                     ");
+        // self.msg_area.add_text(topic);
+        //
+        // self.msg_area.flush_line();
     }
 
     pub fn add_client_err_msg(&mut self, msg: &str) {
@@ -298,7 +318,8 @@ impl MessagingUI {
 
         self.msg_area
             .set_style(SegStyle::SchemeStyle(SchemeStyle::ErrMsg));
-        self.msg_area.add_text("                     ");
+        self.msg_area
+            .add_text(&format!("{: >1$}", "* ", self.left_spacing));
         self.msg_area.add_text(msg);
         self.msg_area.flush_line();
     }
@@ -308,7 +329,8 @@ impl MessagingUI {
 
         self.msg_area
             .set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
-        self.msg_area.add_text("                     ");
+        self.msg_area
+            .add_text(&format!("{: >1$}", "* ", self.left_spacing));
         self.msg_area.add_text(msg);
         self.msg_area.flush_line();
         self.reset_activity_line();
@@ -319,7 +341,8 @@ impl MessagingUI {
 
         self.msg_area
             .set_style(SegStyle::SchemeStyle(SchemeStyle::UserMsg));
-        self.msg_area.add_text("                     ");
+        self.msg_area
+            .add_text(&format!("{: >1$}", "* ", self.left_spacing));
         self.msg_area.add_text(msg);
         self.msg_area.flush_line();
         self.reset_activity_line();
@@ -334,7 +357,7 @@ impl MessagingUI {
         ctcp_action: bool,
     ) {
         self.reset_activity_line();
-        // self.add_timestamp(ts);
+        self.add_timestamp(ts);
 
         if ctcp_action {
             self.msg_area
@@ -346,7 +369,9 @@ impl MessagingUI {
             let nick_color = self.get_nick_color(sender);
             let style = SegStyle::Index(nick_color);
             self.msg_area.set_style(style);
-            self.msg_area.add_text(&format!("{: >20}", sender));
+
+            self.msg_area
+                .add_text(&format!("{: >1$}", sender, self.left_spacing - 1));
         }
 
         self.msg_area
@@ -362,18 +387,32 @@ impl MessagingUI {
                 .set_style(SegStyle::SchemeStyle(SchemeStyle::Highlight));
         }
 
-        self.msg_area.add_text(msg);
-        self.msg_area.flush_line();
+        let subs = msg
+            .as_bytes()
+            .chunks((self.width - (30 as i32)) as usize) // TODO: change this when width changes
+            .map(str::from_utf8)
+            .collect::<Result<Vec<&str>, _>>()
+            .unwrap();
+
+        for (i, sub) in subs.iter().enumerate() {
+            if i != 0 {
+                self.msg_area
+                    .add_text(&format!("{: <1$}", "", self.left_spacing));
+            }
+            self.msg_area.add_text(sub);
+            self.msg_area.flush_line();
+        }
     }
 
     pub fn add_msg(&mut self, msg: &str, ts: Timestamp) {
         self.reset_activity_line();
 
-        // self.add_timestamp(ts);
+        self.add_timestamp(ts);
         self.msg_area
             .set_style(SegStyle::SchemeStyle(SchemeStyle::UserMsg));
 
-        self.msg_area.add_text("                     ");
+        self.msg_area
+            .add_text(&format!("{: >1$}", "* ", self.left_spacing));
         self.msg_area.add_text(msg);
         self.msg_area.flush_line();
     }
@@ -381,10 +420,12 @@ impl MessagingUI {
     pub fn add_err_msg(&mut self, msg: &str, ts: Timestamp) {
         self.reset_activity_line();
 
-        // self.add_timestamp(ts);
+        self.add_timestamp(ts);
         self.msg_area
             .set_style(SegStyle::SchemeStyle(SchemeStyle::ErrMsg));
-        self.msg_area.add_text("                    ");
+
+        self.msg_area
+            .add_text(&format!("{: >1$}", "* ", self.left_spacing));
         self.msg_area.add_text(msg);
         self.msg_area.flush_line();
     }
@@ -419,7 +460,6 @@ impl MessagingUI {
                     line.set_style(SegStyle::SchemeStyle(SchemeStyle::Join));
                     line.add_char('+');
                     line.set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
-                    line.add_text("                     ");
                     line.add_text(nick);
                     line.add_char(' ');
                 });
@@ -439,7 +479,6 @@ impl MessagingUI {
                     line.set_style(SegStyle::SchemeStyle(SchemeStyle::Part));
                     line.add_char('-');
                     line.set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
-                    line.add_text("                     ");
                     line.add_text(nick);
                     line.add_char(' ');
                 });
@@ -467,9 +506,10 @@ impl MessagingUI {
         self.nicks.insert(new_nick);
 
         let line_idx = self.get_activity_line_idx(ts);
+        let left_spacing = self.left_spacing;
         self.msg_area.modify_line(line_idx, |line| {
             line.set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
-            line.add_text("                     ");
+            line.add_text(&format!("{: >1$}", "* ", left_spacing));
             line.add_text(old_nick);
             line.set_style(SegStyle::SchemeStyle(SchemeStyle::Nick));
             line.add_char('>');
@@ -496,6 +536,10 @@ impl MessagingUI {
         }
 
         self.add_timestamp(ts);
+        self.msg_area
+            .set_style(SegStyle::SchemeStyle(SchemeStyle::Faded));
+        self.msg_area
+            .add_text(&format!("{: >1$}", "* ", self.left_spacing));
         let line_idx = self.msg_area.flush_line();
         self.last_activity_line = Some(ActivityLine { ts, line_idx });
         line_idx

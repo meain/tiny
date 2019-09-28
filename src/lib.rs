@@ -151,7 +151,7 @@ impl<'poll> Tiny<'poll> {
 
         // init "mentions" tab
         tui.new_server_tab("mentions");
-        tui.add_client_msg(
+        tui.add_client_notify_msg(
             "Any mentions to you will be listed here.",
             &MsgTarget::Server {
                 serv_name: "mentions",
